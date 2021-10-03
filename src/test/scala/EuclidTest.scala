@@ -54,10 +54,10 @@ class EuclidTest {
 
   @Test
   def continuedFractionTest(): Unit = {
-    assertEquals(Stream[BigInt](0, 27), continuedFraction(1, 27))
-    assertEquals(Stream[BigInt](1, 27), continuedFraction(28, 27))
+    assertEquals(LazyList[BigInt](0, 27), continuedFraction(1, 27))
+    assertEquals(LazyList[BigInt](1, 27), continuedFraction(28, 27))
     assertEquals(
-      Stream[BigInt](1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+      LazyList[BigInt](1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 18, 1, 18),
       continuedFraction(BigInt("161803398875"), BigInt("100000000000"))
     )
@@ -65,10 +65,10 @@ class EuclidTest {
 
   @Test
   def convergentsTest(): Unit = {
-    assertEquals(Stream((0, 1), (1, 27)), convergents(10, 270))
-    assertEquals(Stream((1, 1), (28, 27)), convergents(280, 270))
+    assertEquals(LazyList((0, 1), (1, 27)), convergents(10, 270))
+    assertEquals(LazyList((1, 1), (28, 27)), convergents(280, 270))
     assertEquals(
-      Stream((1,1), (2,1), (3,2), (5,3), (8,5), (13,8), (21,13), (34,21),
+      LazyList((1,1), (2,1), (3,2), (5,3), (8,5), (13,8), (21,13), (34,21),
         (55,34), (89,55), (144,89), (233,144), (377,233), (610,377),
         (987,610), (1597,987), (2584,1597), (4181,2584), (6765,4181),
         (10946,6765), (17711,10946), (28657,17711), (46368,28657),
