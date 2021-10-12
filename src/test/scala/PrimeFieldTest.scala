@@ -1,7 +1,6 @@
 import org.junit.Test
 import org.junit.Assert._
 import scala.util.{Try, Failure, Success}
-import PrimeField._
 
 
 class PrimeFieldTest {
@@ -16,8 +15,6 @@ class PrimeFieldTest {
         assertEquals(pf(2), pf(-8))
         assertEquals(pf.zero, pf(0))
         assertEquals(pf.one, pf(1))
-        assertEquals(pf.Element.zero, pf(0))
-        assertEquals(pf.Element.one, pf(1))
 
         assertEquals(0, pf(0).toInt)
         assertEquals(BigInt(1), pf(1).toBigInt)
