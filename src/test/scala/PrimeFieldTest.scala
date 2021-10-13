@@ -46,4 +46,11 @@ class PrimeFieldTest {
         assertEquals(pf(1) / pf(4), three / two)
     }
 
+    @Test
+    def testBatchInverse = {
+        val order = Prime.next(124)
+        val pf = PrimeField(order)
+        val inverse = batchInverse(pf(2) #:: pf(3) #:: pf(13) #:: pf(123) #:: LazyList.empty)
+        println(inverse.iterator.to(List))
+    }
 }

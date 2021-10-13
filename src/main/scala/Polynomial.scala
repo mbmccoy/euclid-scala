@@ -1,5 +1,7 @@
 import Prime._
 import algebra.ring.Field
+import scala.language.implicitConversions
+import scala.annotation.tailrec
 
 /**
  * Polynomial in one variable over a field.
@@ -9,12 +11,12 @@ case class Polynomial[T] private (private val coefficients: Map[Int, T])(implici
   /**
    * Degree of the polynomial.
    */
-  val degree = (coefficients.keySet + 0).max
+  val degree: Int = (coefficients.keySet + 0).max
 
   /**
    * Get the coefficient for the exponent.
    */
-  def get(degree: Int) = coefficients.getOrElse(degree, ev.zero)
+  def get(degree: Int): T = coefficients.getOrElse(degree, ev.zero)
 
   /**
    * Add polynomials.
@@ -48,17 +50,17 @@ case class Polynomial[T] private (private val coefficients: Map[Int, T])(implici
   def * (that: Polynomial[T]): Polynomial[T] = Polynomial.apply(
       for (degree <- 0 to this.degree + that.degree)
         yield (degree, coefForDegree(this, that, degree))
-    )
-  
-  /**
-   * Divide polynomials.
-   */
-  def / (that: Polynomial[T]): Polynomial[T] = Polynomial.modDiv(this, that)._1
+  )
 
   /**
-   * Remainder after division
+   * Divide polynomials (aka, quotient).
    */
-  def % (that: Polynomial[T]): Polynomial[T] = Polynomial.modDiv(this, that)._2
+  def / (that: Polynomial[T]): Polynomial[T] = Polynomial.modulusQuotient(this, that)._2
+
+  /**
+   * Remainder after division (aka, modulus).
+   */
+  def % (that: Polynomial[T]): Polynomial[T] = Polynomial.modulusQuotient(this, that)._1
 
   /**
    * Compute the coefficient for the given degree.
@@ -68,19 +70,57 @@ case class Polynomial[T] private (private val coefficients: Map[Int, T])(implici
     productsOfDegree.foldLeft(ev.zero)(ev.plus(_, _)) // return the sum
     }
 
+  /**
+   * Pretty string formatting for a polynomial
+   */
   override def toString: String = f"${this.getClass.getName}(" 
-    + coefficients.toSeq.sortBy(_._1).map((i, v) => f"${v} X^${i}").reduce(_ + " + " + _) 
+    + coefficients.toSeq.sortBy(_._1)
+      .map(formatMonomial)
+      .reduceOption(_ + " + " + _)
+      .getOrElse("0")
     + ")"
-  
-  implicit val polynomialField: Field[Polynomial[T]] = new Field[Polynomial[T]] {
-    def negate(x: Polynomial[T]) = -x
-    def plus(x: Polynomial[T], y: Polynomial[T]) = x + y
-    override def minus(x: Polynomial[T], y: Polynomial[T]) = x - y
-    def times(x: Polynomial[T], y: Polynomial[T]) = x * y
-    def div(x: Polynomial[T], y: Polynomial[T]) = x / y
-    def zero = Polynomial.zero[T]
-    def one = Polynomial.one[T]
+
+  private def formatMonomial(degree: Int, scalar: T): String = 
+    if (degree == 0 && scalar == ev.one) { 
+      "1" 
+    } else {
+      formatScalar(scalar) + formatExponent(degree)
+    }
+
+  private def formatScalar(scalar: T): String = 
+    if (scalar == ev.one) { "" } 
+    else { f"${scalar}" }
+
+  private def formatExponent(degree: Int): String = degree match {
+    case 0 => ""
+    case 1 => "X"
+    case _ => f"X^${degree}"
   }
+
+  implicit val polynomialEuclideanRing: EuclideanRing[Polynomial[T]] = 
+    new EuclideanRing[Polynomial[T]] {
+      def negate(x: Polynomial[T]) = -x
+      def plus(x: Polynomial[T], y: Polynomial[T]) = x + y
+      override def minus(x: Polynomial[T], y: Polynomial[T]) = x - y
+      def times(x: Polynomial[T], y: Polynomial[T]) = x * y
+
+      def modulus(x: Polynomial[T], y: Polynomial[T]) = x % y
+      def quotient(x: Polynomial[T], y: Polynomial[T]) = x / y
+      override def modulusQuotient(x: Polynomial[T], y: Polynomial[T]) = Polynomial.modulusQuotient[T](x, y)
+
+      def zero = Polynomial.zero[T]
+      def one = Polynomial.one[T]
+    }
+
+  /**
+   * Evaluate the polynomial at a point
+   */
+  def apply(x: T): T = coefficients.toSeq.sortBy(_._1)
+    .foldRight((degree + 1, ev.zero))({
+      case ((m, coeff), (n, acc)) => {
+        (m, ev.plus(ev.times(ev.pow(x, n - m), acc), coeff)) // (m, acc*x^(n-m) + coeff)
+      }
+    })._2
 }
 
 object Polynomial {
@@ -97,18 +137,48 @@ object Polynomial {
 
   def one[T](implicit ev: Field[T]) = Polynomial(reduceCoeff(Map((0, ev.one))))
 
-  def gcd[T](x: Polynomial[T], y: Polynomial[T])(implicit ev: Field[T]): Polynomial[T] = ???
-
-  def quotient[T](x: Polynomial[T], y: Polynomial[T])(implicit ev: Field[T]): Polynomial[T] = x / y
-  def remainder[T](x: Polynomial[T], y: Polynomial[T])(implicit ev: Field[T]): Polynomial[T] = x % y
-
-  def modDiv[T](x: Polynomial[T], y: Polynomial[T])(implicit ev: Field[T]): (Polynomial[T], Polynomial[T]) = 
-    if (x == zero[T]){
-      (x, y)
+  def modulus[T](x: Polynomial[T], y: Polynomial[T])(implicit ev: Field[T]): Polynomial[T] = modulusQuotient(x, y)._1
+  def quotient[T](x: Polynomial[T], y: Polynomial[T])(implicit ev: Field[T]): Polynomial[T] = modulusQuotient(x, y)._2
+  def modulusQuotient[T](x: Polynomial[T], y: Polynomial[T])(implicit ev: Field[T]): (Polynomial[T], Polynomial[T]) = 
+    (x.degree, y.degree) match {
+      case (x_deg, y_deg) if x_deg < y_deg => (x, zero[T])
+      case (x_deg, y_deg) if x_deg == y_deg => {
+        val scalar: T = ev.div(x.get(x_deg), y.get(y_deg))
+        (x - scalar * y, scalar)
+      }
+      case (x_deg, y_deg) => {
+        // TODO: Handle divide by zero?
+        val scalar: T = ev.div(x.get(x_deg), y.get(y_deg))
+        val scalePoly = Polynomial.apply((x_deg - y_deg, scalar))
+        val subSolution = modulusQuotient(x - scalePoly * y, y)
+        (subSolution._1, scalePoly + subSolution._2)
     }
-    else {
-      (x, y)
+  }
+  /**
+   * Compute the GCD of polynomials
+   */
+  @tailrec
+  def gcd[T](x: Polynomial[T], y: Polynomial[T])(implicit ev: Field[T]): Polynomial[T] =
+    if (x.degree < y.degree) {
+      gcd[T](y, x)(ev)
+    } else if (y == Polynomial.zero[T](ev)) {
+      x
+    } else {
+      gcd[T](y, x % y)(ev)
     }
+  
+  /**
+   * Compute the LCM of polynomials
+   */
+  def lcm[T](x: Polynomial[T], y: Polynomial[T])(implicit ev: Field[T]): Polynomial[T] = 
+    if (x == Polynomial.zero[T](ev)) { Polynomial.zero[T](ev) }
+    else { (x/gcd[T](x, y)(ev)) * y }
 
-  private def reduceCoeff[T](coeff: Map[Int, T])(implicit ev: Field[T]) = coeff.filter((i, v) => v != ev.zero)
+  // Note: this silently drops negative orders.
+  private def reduceCoeff[T](coeff: Map[Int, T])(implicit ev: Field[T]) = coeff.filter((i, v) => v != ev.zero && i >= 0)
 }
+
+/**
+ * Implicitly convert a scalar to a polynomial when needed.
+ */
+implicit def scalarConversion[T](scalar: T)(implicit ev: Field[T]): Polynomial[T] = Polynomial.apply[T]((0, scalar))

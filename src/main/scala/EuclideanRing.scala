@@ -19,11 +19,13 @@ trait EuclideanRing[T] extends Ring[T] {
         if (y == ev.zero) {
             x
         } else {
-            gcd(y, modulus(x, y))
+            println((x, y, modulus(x, y)))
+            ev.gcd(y, modulus(x, y))
         }
 
     /**
     * Least common multiple
     */
-    def lcm(x: T, y: T)(implicit ev: EuclideanRing[T]): T = ev.times(x, ev.quotient(y, gcd(x, y)))
+    def lcm(x: T, y: T)(implicit ev: EuclideanRing[T]): T 
+        = ev.times(x, ev.quotient(y, gcd(x, y)))
 }
