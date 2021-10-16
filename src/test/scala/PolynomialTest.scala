@@ -2,7 +2,6 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest._
 import flatspec._
 import matchers._
-import cats.kernel.compat.scalaVersionSpecific
 
 class PolynomialTest extends AnyFlatSpec with should.Matchers {
     val pf = PrimeField(Prime.next(5))

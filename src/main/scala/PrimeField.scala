@@ -50,6 +50,7 @@ class PrimeField(val p: Prime) { pf =>
     }
 
     def apply(value: BigInt): Element = Element.apply(value)
+    def apply(value: Int): Element = Element.apply(BigInt.apply(value))
 
     val zero = Element.apply(0)
     val one = Element.apply(1)
@@ -57,15 +58,3 @@ class PrimeField(val p: Prime) { pf =>
     override def toString() = s"${this.getClass.getName}(${p.toBigInt.toString})"
 }
 
-/**
- * Invert all field elements using Montgomery batch inversion
- */
-def batchInverse[T](it: IterableOnce[T])(implicit ev: Field[T]): IterableOnce[T] = {
-    val tList: List[T] = it.iterator.to(List) 
-    lazy val products: LazyList[T] = tList.head #:: products.zip(tList.tail).map(t => ev.times(t._1, t._2))
-
-    lazy val productsReversed = products.reverse
-    lazy val tListReversed = tList.reverse
-    lazy val inverses: LazyList[T] = ev.reciprocal(productsReversed.head) #:: inverses.zip(tListReversed).map(t => ev.times(t._1, t._2)).reverse
-    inverses
-}
