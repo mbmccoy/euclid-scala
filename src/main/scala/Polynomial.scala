@@ -51,6 +51,7 @@ case class Polynomial[T] private (
    * Multiply polynomials.
    */
   def * (that: Polynomial[T]): Polynomial[T] = Polynomial.apply(
+      // TODO: Use Fourier transform over finite fields
       for (degree <- 0 to this.degree + that.degree)
         yield (degree, coefForDegree(this, that, degree))
   )
