@@ -28,6 +28,9 @@ class PrimeField(val p: Prime) { pf =>
     object Element {
         def apply(value: BigInt): Element = new Element(normalize(value))
 
+        def zero = apply(0)
+        def one = apply(1)
+
         private val order: BigInt = p.toBigInt    
         private def normalize(value: BigInt): BigInt = value % order match {
             case v if v < 0 => v + order
@@ -36,15 +39,13 @@ class PrimeField(val p: Prime) { pf =>
     }
 
     implicit val elementField: Field[Element] = new Field[Element] {
-        lazy val zero: Element = pf.zero
-        lazy val one: Element = pf.one
+        lazy val zero: Element = pf.Element.zero
+        lazy val one: Element = pf.Element.one
 
         def negate(x: Element): Element = zero - x
         def plus(x: Element, y: Element): Element = x + y
         def combine(x: Element, y: Element): Element = x + y
-        //def inverse(x: Element): Element = Euclid.modDiv(1, p.toBigInt, x.value).map(apply).get
         def product(x: Element, y: Element): Element = x * y
-       // def productInverse(x: Element): Option[Element] = 
         def times(x: Element, y: Element): Element = x * y
         def div(x: Element, y: Element): Element = x / y
     }
@@ -52,8 +53,8 @@ class PrimeField(val p: Prime) { pf =>
     def apply(value: BigInt): Element = Element.apply(value)
     def apply(value: Int): Element = Element.apply(BigInt.apply(value))
 
-    val zero = Element.apply(0)
-    val one = Element.apply(1)
+    val zero = this.Element.zero
+    val one = this.Element.one
 
     override def toString() = s"${this.getClass.getName}(${p.toBigInt.toString})"
 }

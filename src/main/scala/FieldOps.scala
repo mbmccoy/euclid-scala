@@ -23,5 +23,29 @@ object FieldOps {
     /**
      * Find polynomial that goes through a list of (x, y) coordinates.
      */
-    def lagrangeInterpolation[T](points: List[(T, T)])(implicit ev: Field[T]): List[T] = ???
+    def lagrangeInterpolation[T](points: List[(T, T)])(implicit ev: Field[T]): Polynomial[T] = {
+        // The product of (x - x_i) for all i
+        val rootPolynomial = points
+            .foldLeft(Polynomial.one[T])((acc, point) => acc * Polynomial((0, ev.negate(point._1)), (1, ev.one)))
+
+        // TODO: These could be a lot more efficient with evaluation trees
+        //
+        //                  (a * b * c * d)
+        //               (a*b)           (c*d)
+        //              (a) (b)         (c)  (d)
+        //
+        // Then (a*b*d) = (a*b) * d . Basically, do O(N log(N)) multiplications,
+        // to build the tree, then do O(log(N)) operations to evaluate each 
+        // denominator below, for a total of O(N log(N)) multiplications.
+
+        points
+            .map(point => {
+                // Evaluate the polynomial
+                val denominatorPoly: Polynomial[T] = rootPolynomial/Polynomial((0, ev.negate(point._1)), (1, ev.one))
+                val denominator: T = denominatorPoly(point._1)
+                val numerator: Polynomial[T] = point._2 * Polynomial((0, ev.negate(point._1)), (1, ev.one))
+                numerator / denominator
+            })
+            .reduce(_ + _)
+    }
 }

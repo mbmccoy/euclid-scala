@@ -17,7 +17,7 @@ import algebra.ring.Field
  * 
  * [1] http://www.math.rwth-aachen.de/~Frank.Luebeck/data/ConwayPol/index.html
  */
-class ConwayField(p: Prime, e: Int, conwayExponents: Iterable[(Int, Int)]=Nil) {
+class ConwayField(p: Prime, exponent: Int, conwayExponents: Iterable[(Int, Int)]=Nil) {
     /**
      * Base field of order p^e.
      * 
@@ -33,21 +33,7 @@ class ConwayField(p: Prime, e: Int, conwayExponents: Iterable[(Int, Int)]=Nil) {
     /**
      * The order (size) of the prime field.
      */
-    val order: BigInt = primeField.p.toBigInt.pow(e)
-
-    /** 
-     * Element of a prime field.
-     */
-    case class Element private (private val value: Polynomial[primeField.Element]) {
-
-        def + (that: Element) = Element.apply(this.value + that.value)
-        def - (that: Element) = Element.apply(this.value - that.value)
-        def * (that: Element): Element = Element.apply(this.value * that.value)
-        def / (that: Element): Element = ??? // TODO using GCD algorithm
-
-        def toPolynomial: Polynomial[primeField.Element] = value
-        override def toString: String = f"${this.toPolynomial}"
-    }
+    val order: BigInt = primeField.p.toBigInt.pow(exponent)
 
     /**
      * The Conway polynomial for this field.
@@ -59,20 +45,44 @@ class ConwayField(p: Prime, e: Int, conwayExponents: Iterable[(Int, Int)]=Nil) {
     val conwayPolynomial: Polynomial[primeField.Element] = {
         val _exponents: IterableOnce[(Int, Int)] = {
             if (conwayExponents.isEmpty)
-                ConwayData.get(p, e).exponents.zipWithIndex.map(x => (x._2, x._1))
+                ConwayData.get(p, exponent).exponents.zipWithIndex.map(x => (x._2, x._1))
             else
                 conwayExponents
         }
         Polynomial(_exponents.iterator.map(x=>(x._1, primeField(x._2))))
     }
 
+    /** 
+     * Element of this Conway field.
+     */
+    case class Element private (private val value: Polynomial[primeField.Element]) {
+        // Note: We choose not to extend the polynomial definition because the
+        // elements of a field are not polynomials per se; they are just represented
+        // by polynomials internally.
+        def + (that: Element) = Element.apply(this.value + that.value)
+        def unary_+ = this
+
+        def - (that: Element) = Element.apply(this.value - that.value)
+        def unary_- = Element.zero - this
+
+        def * (that: Element): Element = Element.apply(this.value * that.value)
+        def / (that: Element): Element = this * that.reciprocal
+
+        def reciprocal: Element = {
+            // The Conway polynomial is irreducible, so r==1. Thus,
+            // 1 == s * this + t * conwayPolynomial === s * this (mod conwayPolynomial)
+            // Thus, s == 1/this.
+            val (r, s, t) = Polynomial.bezout[primeField.Element](this.value, conwayPolynomial)
+            Element.apply(s)
+        }
+        def toPolynomial: Polynomial[primeField.Element] = value
+        override def toString: String = f"${this.toPolynomial}"
+    }
+
     object Element {
-
-        def apply(value: Polynomial[primeField.Element]): Element = Element(normalize(value))
-        
-        val zero: Element = Element(Polynomial.zero[primeField.Element])
-        val one: Element = Element(Polynomial.one[primeField.Element])
-
+        def apply(value: Polynomial[primeField.Element]): Element = new Element(normalize(value))        
+        val zero: Element = new Element(Polynomial((0, primeField.zero)))
+        val one: Element = new Element(Polynomial((0, primeField.one)))
         private val order: BigInt = p.toBigInt    
         private def normalize(value: Polynomial[primeField.Element]): Polynomial[primeField.Element] = 
             value % conwayPolynomial match {
@@ -92,7 +102,12 @@ class ConwayField(p: Prime, e: Int, conwayExponents: Iterable[(Int, Int)]=Nil) {
         def product(x: Element, y: Element): Element = x * y
         def times(x: Element, y: Element): Element = x * y
         def div(x: Element, y: Element): Element = x / y
+        override def reciprocal(x: Element) = x.reciprocal
     }
+
+    def zero = this.Element.zero
+    def one = this.Element.one
+    def apply(value: Polynomial[primeField.Element]): Element = Element.apply(value)
 }
 
 

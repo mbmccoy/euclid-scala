@@ -6,7 +6,10 @@ import scala.annotation.tailrec
 /**
  * Polynomial in one variable over a field.
  */
-case class Polynomial[T] private (private val coefficients: Map[Int, T])(implicit ev: Field[T]) {
+case class Polynomial[T] private (
+    private val coefficients: Map[Int, T], 
+    val formalVariable: String = "X"
+  )(implicit ev: Field[T]) {
 
   /**
    * Degree of the polynomial.
@@ -73,12 +76,10 @@ case class Polynomial[T] private (private val coefficients: Map[Int, T])(implici
   /**
    * Pretty string formatting for a polynomial
    */
-  override def toString: String = f"${this.getClass.getName}(" 
-    + coefficients.toSeq.sortBy(_._1)
+  override def toString: String = coefficients.toSeq.sortBy(_._1)
       .map(formatMonomial)
       .reduceOption(_ + " + " + _)
       .getOrElse("0")
-    + ")"
 
   private def formatMonomial(degree: Int, scalar: T): String = 
     if (degree == 0 && scalar == ev.one) { 
@@ -93,8 +94,8 @@ case class Polynomial[T] private (private val coefficients: Map[Int, T])(implici
 
   private def formatExponent(degree: Int): String = degree match {
     case 0 => ""
-    case 1 => "X"
-    case _ => f"X^${degree}"
+    case 1 => f"${formalVariable}"
+    case _ => f"${formalVariable}^${degree}"
   }
 
   implicit val polynomialEuclideanRing: EuclideanRing[Polynomial[T]] = 
@@ -121,15 +122,23 @@ case class Polynomial[T] private (private val coefficients: Map[Int, T])(implici
         (m, ev.plus(ev.times(ev.pow(x, n - m), acc), coeff)) // (m, acc*x^(n-m) + coeff)
       }
     })._2
+
+    /**
+     * Create a new polynomial with a different formal variable.
+     */
+    def withFormalVariable(newFormalVariable: String) = new Polynomial(coefficients, newFormalVariable)
 }
 
 object Polynomial {
 
   def apply[T](coef: (Int, T)*)(implicit ev: Field[T]): Polynomial[T] 
-    = Polynomial(reduceCoeff(Map.from(coef)))
+    = new Polynomial(reduceCoeff(Map.from(coef)))
 
   def apply[T](coef: IterableOnce[(Int, T)])(implicit ev: Field[T]): Polynomial[T] 
-    = Polynomial(reduceCoeff(Map.from(coef)))
+    = new Polynomial(reduceCoeff(Map.from(coef)))
+
+  def apply[T](coef: IterableOnce[(Int, T)], formalVariable: String)(implicit ev: Field[T]): Polynomial[T] 
+    = new Polynomial(reduceCoeff(Map.from(coef)), formalVariable=formalVariable)
 
   def empty[T](implicit ev: Field[T]) = Polynomial(reduceCoeff(Map.empty[Int, T]))
 
@@ -154,19 +163,44 @@ object Polynomial {
         (subSolution._1, scalePoly + subSolution._2)
     }
   }
+
   /**
-   * Compute the GCD of polynomials
+   * Compute the GCD of polynomials.
    */
   @tailrec
   def gcd[T](x: Polynomial[T], y: Polynomial[T])(implicit ev: Field[T]): Polynomial[T] =
     if (x.degree < y.degree) {
       gcd[T](y, x)(ev)
     } else if (y == Polynomial.zero[T](ev)) {
-      x
+      x / x.get(x.degree)
     } else {
       gcd[T](y, x % y)(ev)
     }
-  
+
+  /**
+    * Bézout polynomials via the extended Euclidean algorithm.
+    *
+    * @return Tuple (r, s, t) such that r == a*s + b*t and r == gcd(a, b)
+    */
+  def bezout[T](a: Polynomial[T], b: Polynomial[T])(implicit ev: Field[T]): (Polynomial[T], Polynomial[T], Polynomial[T]) = {
+    val zero = Polynomial.zero[T](ev)
+    val one = Polynomial.one[T](ev)
+    @tailrec
+    def bezoutR(r0: Polynomial[T]=a, s0: Polynomial[T]=one, t0: Polynomial[T]=zero,
+                r1: Polynomial[T]=b, s1: Polynomial[T]=zero, t1: Polynomial[T]=one):
+    (Polynomial[T], Polynomial[T], Polynomial[T]) = 
+      if (r1 == zero) {
+        val leadingCoeff = r0.get(r0.degree)
+        // Rescale to a monic polynomial
+        (r0 / leadingCoeff, s0 / leadingCoeff, t0 / leadingCoeff)
+      } else {
+        val q = r0 / r1
+        val m = r0 % r1
+        bezoutR(r1, s1, t1, m, s0 - q * s1, t0 - q * t1)
+      }
+    bezoutR()
+  }
+
   /**
    * Compute the LCM of polynomials
    */

@@ -1,4 +1,4 @@
-import algebra.ring.Ring
+import algebra.ring.{Ring, Field}
 import scala.annotation.tailrec
 
 
@@ -19,7 +19,6 @@ trait EuclideanRing[T] extends Ring[T] {
         if (y == ev.zero) {
             x
         } else {
-            println((x, y, modulus(x, y)))
             ev.gcd(y, modulus(x, y))
         }
 
