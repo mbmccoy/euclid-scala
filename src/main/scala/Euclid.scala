@@ -59,10 +59,10 @@ object Euclid {
     *
     * @param n Numerator
     * @param d Denominator
-    * @return Stream of partial quotients a
+    * @return LazyList of partial quotients a
     */
-  def continuedFraction(n: BigInt, d: BigInt): Stream[BigInt] = (n, d) match {
-    case (_, Zero) => Stream.empty
+  def continuedFraction(n: BigInt, d: BigInt): LazyList[BigInt] = (n, d) match {
+    case (_, Zero) => LazyList.empty
     case _ =>
       val a = n / d
       a #:: continuedFraction(d, n - d * a)
@@ -73,16 +73,17 @@ object Euclid {
     *
     * @param n Numerator
     * @param d Denominator
-    * @return Stream of (p, q) defining convergents p / q
+    * @return LazyList of (p, q) defining convergents p / q
     */
-  def convergents(n: BigInt, d: BigInt): Stream[(BigInt, BigInt)] = {
+  def convergents(n: BigInt, d: BigInt): LazyList[(BigInt, BigInt)] = {
     def convergentsR(p: BigInt,
                      pp: BigInt,
-                     cf: Stream[BigInt]): Stream[BigInt] = cf match {
-      case Stream.Empty => p #:: Stream.Empty
+                     cf: LazyList[BigInt]): LazyList[BigInt] = cf match {
+      case LazyList() => p #:: LazyList.empty
       case h #:: tail =>
         val next = h * p + pp
         p #:: convergentsR(next, p, tail)
+      
     }
 
     val cf = continuedFraction(n, d)
