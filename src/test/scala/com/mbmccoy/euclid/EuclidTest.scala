@@ -1,3 +1,5 @@
+package com.mbmccoy.euclid
+
 import org.junit.Test
 import org.junit.Assert._
 

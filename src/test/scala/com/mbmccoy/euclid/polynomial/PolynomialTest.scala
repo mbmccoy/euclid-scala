@@ -1,3 +1,5 @@
+package com.mbmccoy.euclid.polynomial
+
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest._
 import flatspec._

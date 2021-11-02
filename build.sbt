@@ -1,8 +1,13 @@
+assemblyMergeStrategy in assembly := {   
+  case PathList("META-INF", xs @ _*) => MergeStrategy.discard   
+  case x => MergeStrategy.first 
+}
+
 lazy val root = project
   .in(file("."))
   .settings(
     name := "euclid-scala",
-    version := "0.1",
+    version := "0.1.0-SNAPSHOT",
     scalaVersion := "3.0.2",
     libraryDependencies ++= Seq(
       "org.scalactic" %% "scalactic" % "3.2.10",
@@ -13,6 +18,5 @@ lazy val root = project
       "org.typelevel" %% "algebra" % "2.2.3",
       "com.fasterxml.jackson.module" % "jackson-module-scala_3" % "2.13.0",
       "org.json4s" %% "json4s-jackson" % "4.0.3"
-
     )
-)
+  )

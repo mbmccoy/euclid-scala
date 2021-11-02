@@ -1,3 +1,5 @@
+package com.mbmccoy.euclid
+
 import scala.annotation.tailrec
 
 /**

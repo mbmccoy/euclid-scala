@@ -1,4 +1,5 @@
-import Prime._
+package com.mbmccoy.euclid.polynomial
+
 import algebra.ring.Field
 import scala.language.implicitConversions
 import scala.annotation.tailrec

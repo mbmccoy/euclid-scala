@@ -1,3 +1,5 @@
+package com.mbmccoy.euclid.polynomial
+
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest._
 import flatspec._
@@ -7,21 +9,21 @@ import scala.math.pow
 import algebra.ring.Field
 
 
-class ConwayFieldTest extends AnyFlatSpec with should.Matchers {
+class FiniteFieldTest extends AnyFlatSpec with should.Matchers {
     val two_p = Prime.next(2)
     val three_p = Prime.next(3)
     val five_p = Prime.next(5)
 
     // Use in tests with a single CF
-    val cf = ConwayField(three_p, exponent=2)
+    val cf = FiniteField(three_p, exponent=2)
     val zero = cf.zero
     val one = cf.one
     val x = cf(Polynomial((1, cf.primeField(1))))
     val two = cf(Polynomial((0, cf.primeField(2))))
 
     // Use in tests with multiple CFs
-    val cf1 = ConwayField(five_p, exponent=3)
-    val cf2 = ConwayField(two_p, exponent=12)
+    val cf1 = FiniteField(five_p, exponent=3)
+    val cf2 = FiniteField(two_p, exponent=12)
 
     "ConwayField" should "have the correct prime field" in {
         cf1.primeField.p should be(five_p)

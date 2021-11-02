@@ -1,3 +1,4 @@
+package com.mbmccoy.euclid.polynomial
 import scala.annotation.tailrec
 
 /** Prime numbers. */

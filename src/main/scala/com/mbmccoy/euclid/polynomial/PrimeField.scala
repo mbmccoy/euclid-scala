@@ -1,8 +1,10 @@
 
+package com.mbmccoy.euclid.polynomial
+
 import cats.Group
 import algebra.ring.Field
 
-import Euclid._
+import com.mbmccoy.euclid.Euclid._
 
 /** 
  * Prime field for a given prime. 

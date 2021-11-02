@@ -1,3 +1,5 @@
+package com.mbmccoy.euclid.polynomial
+
 import algebra.ring.{Ring, Field}
 import scala.annotation.tailrec
 

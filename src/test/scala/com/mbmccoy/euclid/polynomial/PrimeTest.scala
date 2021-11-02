@@ -1,3 +1,5 @@
+package com.mbmccoy.euclid.polynomial
+
 import org.junit.Test
 import org.junit.Assert._
 

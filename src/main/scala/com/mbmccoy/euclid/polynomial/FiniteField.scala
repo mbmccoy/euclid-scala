@@ -1,3 +1,5 @@
+package com.mbmccoy.euclid.polynomial
+
 import scala.io.Source
 import org.json4s._
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -6,6 +8,7 @@ import org.json4s.jackson.JsonMethods._
 import scala.util.Using
 
 import algebra.ring.Field
+
 
 /**
  * Finite fields of order p^e represented by Conway Polynomials.
@@ -17,7 +20,7 @@ import algebra.ring.Field
  * 
  * [1] http://www.math.rwth-aachen.de/~Frank.Luebeck/data/ConwayPol/index.html
  */
-class ConwayField(p: Prime, exponent: Int, conwayExponents: Iterable[(Int, Int)]=Nil) {
+class FiniteField(p: Prime, exponent: Int, conwayExponents: Iterable[(Int, Int)]=Nil) {
     /**
      * Base field of order p^e.
      * 

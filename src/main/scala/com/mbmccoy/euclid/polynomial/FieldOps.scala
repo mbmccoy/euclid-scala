@@ -1,3 +1,5 @@
+package com.mbmccoy.euclid.polynomial
+
 import algebra.ring.Field
 
 object FieldOps {
