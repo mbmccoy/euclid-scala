@@ -70,4 +70,31 @@ class FiniteFieldTest extends AnyFlatSpec with should.Matchers {
         (two * x) / two should be (x)
         two * (one - two * x + x * x) / (x - one) should be (two * (x - one))
     }
+
+    "Fields of characteristic one" should "be available" in {
+        val p = Prime.next(65537) 
+        val exponent = 1
+        val ff = FiniteField(p, exponent)
+        val pf = PrimeField(p)
+        ff.primeField.order should be (pf.order)
+        ff.conwayPolynomial.toString should be ("1 + X")
+    }
+
+    "Random" should "sample elements" in {
+        val p = Prime.next(3)
+        val exponent = 4
+        val ff = FiniteField(p, exponent)
+        for (i <- 0 until 100) {
+            val sample = ff.random
+            val product = sample * (p.toInt + 1)
+            product should be (sample)
+        }
+    }
+
+    "Product with ints" should "be sane" in {
+        val el = (cf1.one + cf1.one)
+        (el * 0) should be (cf1.zero)
+        (el * 1) should be (el)
+        (el * cf1.primeField.order.toInt) should be (cf1.zero)
+    }
 }

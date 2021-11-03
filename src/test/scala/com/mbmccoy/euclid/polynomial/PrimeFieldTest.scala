@@ -3,7 +3,10 @@ package com.mbmccoy.euclid.polynomial
 import org.junit.Test
 import org.junit.Assert._
 import scala.util.{Try, Failure, Success}
-
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest._
+import flatspec._
+import matchers._
 
 class PrimeFieldTest {
     
@@ -48,4 +51,15 @@ class PrimeFieldTest {
         assertEquals(pf(1) / pf(4), three / two)
     }
 
+}
+
+class PrimeFieldMatchersTest extends AnyFlatSpec with should.Matchers {
+    "Random" should "return a random field element" in {
+        val p = Prime.next(50)
+        val pf = PrimeField(p)
+        for (i <- 0 until 100) {
+            val sample = pf.random
+            sample.value should be < pf.order
+        }
+    }
 }

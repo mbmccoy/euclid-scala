@@ -47,11 +47,19 @@ Tests for the functions can be run via `sbt test`. To create a fat jar, use `sbt
 You can run a scala3 notebook (assuming jupyter is installed) using the
 method described [here](https://github.com/almond-sh/almond/issues/718#issuecomment-941908746), to wit:
 
+Make sure that `jupyter` is installed and available on your `PYTHONPATH`, e.g., activate a virtual environment.
+
+Check out the `almond` repo and update the dependencies (only needs to be done once).
 ```
 git clone git@github.com:almond-sh/almond.git
 cd almond
 git submodule init
 git submodule update
+```
+
+Finally, run `mill` from the base of the `almond` directory, and point 
+the jupyter server where you want the code to be run:
+```
 ./mill -i jupyter 3.0.1 <path/to/root/folder>
 ```
 

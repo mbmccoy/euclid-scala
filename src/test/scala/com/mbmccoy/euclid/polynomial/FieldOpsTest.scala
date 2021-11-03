@@ -28,4 +28,20 @@ class FieldOpsTest extends AnyFlatSpec with should.Matchers {
         // Check that elements times inverse is one
         inverse.zip(elements).map(_*_).map(_ should be (pf.one))
     }
+
+    "lagrangeInterpolation" should "work in the happy case" in {
+        val elements = pf(0) :: pf(1) :: pf(2) :: pf(4) :: pf(3) :: pf(5) :: pf(6) :: List.empty
+        val values = pf(2) :: pf(2) :: pf(2) :: pf(2) :: pf(2) :: pf(2) :: pf(2) :: List.empty
+        val result = lagrangeInterpolation(elements.zip(values))
+        result.toString should be ("2")
+    }
+
+    "rootPolynomials" should "work" in {
+        val elements = pf(0) :: pf(1) :: pf(2) :: pf(4) :: pf(3) :: pf(5) :: pf(6) :: List.empty
+        val rootPoly = rootPolynomial(elements)
+        rootPoly.toString should be ("6X + X^7")  // same as X^7 - 1
+        elements map {el =>
+            rootPoly(el) should be (pf.zero)
+        }
+    }
 }

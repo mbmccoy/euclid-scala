@@ -23,13 +23,21 @@ object FieldOps {
     }
 
     /**
+     * Get monic polynomial with given roots
+     */
+    def rootPolynomial[T](points: List[T])(implicit ev: Field[T]): Polynomial[T] = {
+        points
+          .foldLeft(Polynomial.one[T])((acc, point) => {
+            acc * Polynomial((0, ev.negate(point)), (1, ev.one))
+        })
+    }
+
+    /**
      * Find polynomial that goes through a list of (x, y) coordinates.
      */
     def lagrangeInterpolation[T](points: List[(T, T)])(implicit ev: Field[T]): Polynomial[T] = {
         // The product of (x - x_i) for all i
-        val rootPolynomial = points
-            .foldLeft(Polynomial.one[T])((acc, point) => acc * Polynomial((0, ev.negate(point._1)), (1, ev.one)))
-
+        val rootPoly = rootPolynomial(points.map{p => p._1})
         // TODO: These could be a lot more efficient with evaluation trees
         //
         //                  (a * b * c * d)
@@ -39,11 +47,10 @@ object FieldOps {
         // Then (a*b*d) = (a*b) * d . Basically, do O(N log(N)) multiplications,
         // to build the tree, then do O(log(N)) operations to evaluate each 
         // denominator below, for a total of O(N log(N)) multiplications.
-
         points
             .map(point => {
                 // Evaluate the polynomial
-                val denominatorPoly: Polynomial[T] = rootPolynomial/Polynomial((0, ev.negate(point._1)), (1, ev.one))
+                val denominatorPoly: Polynomial[T] = rootPoly/Polynomial((0, ev.negate(point._1)), (1, ev.one))
                 val denominator: T = denominatorPoly(point._1)
                 val numerator: Polynomial[T] = point._2 * Polynomial((0, ev.negate(point._1)), (1, ev.one))
                 numerator / denominator

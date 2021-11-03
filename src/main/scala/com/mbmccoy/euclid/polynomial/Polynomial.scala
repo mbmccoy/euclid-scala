@@ -116,11 +116,25 @@ case class Polynomial[T] private (
     }
 
   /**
+   * Sorted coefficients of the polynomial, from highest to lowest degree.
+   * 
+   * We require the (0, 0) coefficient for the algorithm used for
+   * point evaluation below.
+   */
+  private lazy val sortedCoefs: List[(Int, T)] = {
+    val coef = get(0) match {
+      case 0 => coefficients.toList
+      case _ => (0, ev.zero) :: coefficients.toList
+    }
+    coef.sortBy(-_._1)
+  }
+
+  /**
    * Evaluate the polynomial at a point
    */
-  def apply(x: T): T = coefficients.toSeq.sortBy(_._1)
-    .foldRight((degree + 1, ev.zero))({
-      case ((m, coeff), (n, acc)) => {
+  def apply(x: T): T = sortedCoefs
+    .foldLeft((degree + 1, ev.zero))({
+      case ((n, acc), (m, coeff)) => {
         (m, ev.plus(ev.times(ev.pow(x, n - m), acc), coeff)) // (m, acc*x^(n-m) + coeff)
       }
     })._2
@@ -150,7 +164,31 @@ object Polynomial {
 
   def modulus[T](x: Polynomial[T], y: Polynomial[T])(implicit ev: Field[T]): Polynomial[T] = modulusQuotient(x, y)._1
   def quotient[T](x: Polynomial[T], y: Polynomial[T])(implicit ev: Field[T]): Polynomial[T] = modulusQuotient(x, y)._2
-  def modulusQuotient[T](x: Polynomial[T], y: Polynomial[T])(implicit ev: Field[T]): (Polynomial[T], Polynomial[T]) = 
+
+  @tailrec
+  private def modulusQuotientHelper[T](x: Polynomial[T], y: Polynomial[T], prevScale: Polynomial[T])(implicit ev: Field[T])
+    : (Polynomial[T], Polynomial[T], Polynomial[T]) = {
+
+      (x.degree, y.degree) match {
+      case (x_deg, y_deg) if x_deg < y_deg => (x, zero[T], prevScale)
+      case (x_deg, y_deg) if x_deg == y_deg => {
+        val scalar: T = ev.div(x.get(x_deg), y.get(y_deg))
+        (x - scalar * y, scalar, prevScale)
+      }
+      case (x_deg, y_deg) => {
+        // TODO: Handle divide by zero?
+        val scalar: T = ev.div(x.get(x_deg), y.get(y_deg))
+        val scalePoly = Polynomial.apply((x_deg - y_deg, scalar))
+        modulusQuotientHelper(x - scalePoly * y, y, scalePoly + prevScale)
+      }
+    }
+  }
+
+  def modulusQuotient[T](x: Polynomial[T], y: Polynomial[T])(implicit ev: Field[T]): (Polynomial[T], Polynomial[T]) = {
+    val result = modulusQuotientHelper(x, y, zero[T])
+    (result._1, result._2 + result._3)
+  }
+    /*
     (x.degree, y.degree) match {
       case (x_deg, y_deg) if x_deg < y_deg => (x, zero[T])
       case (x_deg, y_deg) if x_deg == y_deg => {
@@ -162,9 +200,9 @@ object Polynomial {
         val scalar: T = ev.div(x.get(x_deg), y.get(y_deg))
         val scalePoly = Polynomial.apply((x_deg - y_deg, scalar))
         val subSolution = modulusQuotient(x - scalePoly * y, y)
-        (subSolution._1, scalePoly + subSolution._2)
-    }
-  }
+        (subSolution._1, subSolution._2 + scalePoly)
+    } 
+  } */
 
   /**
    * Compute the GCD of polynomials.

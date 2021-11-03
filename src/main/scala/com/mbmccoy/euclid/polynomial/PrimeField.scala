@@ -55,8 +55,14 @@ class PrimeField(val p: Prime) { pf =>
     def apply(value: BigInt): Element = Element.apply(value)
     def apply(value: Int): Element = Element.apply(BigInt.apply(value))
 
+    /**
+     * Sample a random element from this field.
+     */
+    def random: Element = Element(RandomUtils.sample(order))
+
     val zero = this.Element.zero
     val one = this.Element.one
+    val order = p.toBigInt
 
     override def toString() = s"${this.getClass.getName}(${p.toBigInt.toString})"
 }

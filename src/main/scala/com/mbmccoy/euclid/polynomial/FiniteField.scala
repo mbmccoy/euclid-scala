@@ -1,5 +1,7 @@
 package com.mbmccoy.euclid.polynomial
 
+import scala.annotation.targetName
+import scala.language.implicitConversions
 import scala.io.Source
 import org.json4s._
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -47,8 +49,12 @@ class FiniteField(p: Prime, exponent: Int, conwayExponents: Iterable[(Int, Int)]
      */
     val conwayPolynomial: Polynomial[primeField.Element] = {
         val _exponents: IterableOnce[(Int, Int)] = {
-            if (conwayExponents.isEmpty)
-                ConwayData.get(p, exponent).exponents.zipWithIndex.map(x => (x._2, x._1))
+            if (conwayExponents.isEmpty) {
+            exponent match {
+                case 1 => (0, 1) :: (1, 1) :: Nil
+                case _ =>                 
+                    ConwayData.get(p, exponent).exponents.zipWithIndex.map(x => (x._2, x._1))
+            }}
             else
                 conwayExponents
         }
@@ -69,7 +75,11 @@ class FiniteField(p: Prime, exponent: Int, conwayExponents: Iterable[(Int, Int)]
         def unary_- = Element.zero - this
 
         def * (that: Element): Element = Element.apply(this.value * that.value)
+        def * (that: Int): Element = fieldImpl.sumN(this, that)
+
         def / (that: Element): Element = this * that.reciprocal
+
+        def pow(that: Int): Element = fieldImpl.pow(this, that)
 
         def reciprocal: Element = {
             // The Conway polynomial is irreducible, so r==1. Thus,
@@ -95,7 +105,7 @@ class FiniteField(p: Prime, exponent: Int, conwayExponents: Iterable[(Int, Int)]
             }
     }
 
-    implicit val conwayFieldImpl: Field[Element] = new Field[Element] {
+    implicit val fieldImpl: Field[Element] = new Field[Element] {
         lazy val zero = Element.zero
         lazy val one = Element.one
 
@@ -108,9 +118,29 @@ class FiniteField(p: Prime, exponent: Int, conwayExponents: Iterable[(Int, Int)]
         override def reciprocal(x: Element) = x.reciprocal
     }
 
+    /**
+     * Sample a random element from this field.
+     */
+    def random: Element = {
+        val coefficients = for (i <- 0 until exponent) yield (i, primeField.random)
+        this.apply(Polynomial[primeField.Element](
+            coefficients
+        ))
+    }
+
     def zero = this.Element.zero
     def one = this.Element.one
-    def apply(value: Polynomial[primeField.Element]): Element = Element.apply(value)
+
+    def apply(polynomial: Polynomial[primeField.Element]): Element = Element.apply(polynomial)
+    def apply(coef: Iterable[(Int, Int)]): Element = Element.apply(
+        Polynomial[primeField.Element].apply(
+            coef.map(v => (v._1, primeField(v._2)))
+        )
+    )
+
+    @targetName("applyCoefficients")  // Handle type erasure
+    def apply(coefficients: Iterable[Int]): Element = 
+        apply(coefficients.zipWithIndex.map(x => (x._2, x._1)))
 }
 
 
@@ -152,6 +182,3 @@ private object ConwayData{
     def get(p: Prime, order: Int): ConwayData = conwayData.get((p, order)).get
     def get(p: Int, order: Int): ConwayData = Prime.from(p).flatMap(conwayData.get(_, order)).get
 }
-
-
-

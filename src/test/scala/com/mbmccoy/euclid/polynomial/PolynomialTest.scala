@@ -130,6 +130,13 @@ class PolynomialTest extends AnyFlatSpec with should.Matchers {
         aPoly(pf(2)) should be (pf(1))
     }
 
+    "A polynomial without a low order term"  should "be able to be evaluated" in {
+        val aPoly = Polynomial((3, pf(2)), (2, pf(2))) // 2 X^3 + 2 X^2
+        aPoly(pf.zero) should be (pf.zero)
+        aPoly(pf.one) should be (pf(4)) 
+        aPoly(pf(2)) should be (pf(4))
+    }
+
     "Polynomials" should "have gcds and lcms" in {
         val aPoly = Polynomial((4, pf(4)), (2, pf(3)), (0, pf(2)))  // 5 x^4 + 3 x^2 + 2
         val bPoly = Polynomial((1, pf(1)), (0, pf(1))) // x + 1
