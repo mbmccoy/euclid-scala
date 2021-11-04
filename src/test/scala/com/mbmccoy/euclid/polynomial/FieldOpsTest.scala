@@ -32,8 +32,14 @@ class FieldOpsTest extends AnyFlatSpec with should.Matchers {
     "lagrangeInterpolation" should "work in the happy case" in {
         val elements = pf(0) :: pf(1) :: pf(2) :: pf(4) :: pf(3) :: pf(5) :: pf(6) :: List.empty
         val values = pf(2) :: pf(2) :: pf(2) :: pf(2) :: pf(2) :: pf(2) :: pf(2) :: List.empty
-        val result = lagrangeInterpolation(elements.zip(values))
-        result.toString should be ("2")
+        val constantPoly = lagrangeInterpolation(elements.zip(values))
+        constantPoly.toString should be ("2")
+
+        val identityPoly = lagrangeInterpolation(elements.zip(elements))
+        identityPoly.toString should be ("X")
+
+        val comboPoly = lagrangeInterpolation(elements.zip(elements.map(e => e*e).zip(values).map(_+_)))
+        comboPoly.toString should be ("2 + X^2")
     }
 
     "rootPolynomials" should "work" in {

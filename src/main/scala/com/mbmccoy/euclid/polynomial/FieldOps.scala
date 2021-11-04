@@ -38,7 +38,7 @@ object FieldOps {
     def lagrangeInterpolation[T](points: List[(T, T)])(implicit ev: Field[T]): Polynomial[T] = {
         // The product of (x - x_i) for all i
         val rootPoly = rootPolynomial(points.map{p => p._1})
-        // TODO: These could be a lot more efficient with evaluation trees
+        // TODO: These could be a lot more efficient. E.g., with evaluation trees
         //
         //                  (a * b * c * d)
         //               (a*b)           (c*d)
@@ -46,13 +46,14 @@ object FieldOps {
         //
         // Then (a*b*d) = (a*b) * d . Basically, do O(N log(N)) multiplications,
         // to build the tree, then do O(log(N)) operations to evaluate each 
-        // denominator below, for a total of O(N log(N)) multiplications.
+        // numerator below, for a total of O(N log(N)) multiplications.
+        // Then apply batch inversion to get the denominators.
         points
             .map(point => {
                 // Evaluate the polynomial
-                val denominatorPoly: Polynomial[T] = rootPoly/Polynomial((0, ev.negate(point._1)), (1, ev.one))
-                val denominator: T = denominatorPoly(point._1)
-                val numerator: Polynomial[T] = point._2 * Polynomial((0, ev.negate(point._1)), (1, ev.one))
+                val numeratorPoly: Polynomial[T] = rootPoly/Polynomial((0, ev.negate(point._1)), (1, ev.one))
+                val denominator: T = numeratorPoly(point._1)
+                val numerator: Polynomial[T] = point._2 * numeratorPoly
                 numerator / denominator
             })
             .reduce(_ + _)
