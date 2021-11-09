@@ -168,19 +168,20 @@ object Polynomial {
   @tailrec
   private def modulusQuotientHelper[T](x: Polynomial[T], y: Polynomial[T], prevScale: Polynomial[T])(implicit ev: Field[T])
     : (Polynomial[T], Polynomial[T], Polynomial[T]) = {
-
       (x.degree, y.degree) match {
-      case (x_deg, y_deg) if x_deg < y_deg => (x, zero[T], prevScale)
-      case (x_deg, y_deg) if x_deg == y_deg => {
-        val scalar: T = ev.div(x.get(x_deg), y.get(y_deg))
-        (x - scalar * y, scalar, prevScale)
-      }
-      case (x_deg, y_deg) => {
-        // TODO: Handle divide by zero?
-        val scalar: T = ev.div(x.get(x_deg), y.get(y_deg))
-        val scalePoly = Polynomial.apply((x_deg - y_deg, scalar))
-        modulusQuotientHelper(x - scalePoly * y, y, scalePoly + prevScale)
-      }
+        case (x_deg, y_deg) if x_deg < y_deg => {
+          (x, zero[T], prevScale)
+        }
+        case (x_deg, y_deg) if x_deg == y_deg => {
+          val scalar: T = ev.div(x.get(x_deg), y.get(y_deg))
+          (x - scalar * y, scalar, prevScale)
+        }
+        case (x_deg, y_deg) => {
+          // TODO: Handle divide by zero?
+          val scalar: T = ev.div(x.get(x_deg), y.get(y_deg))
+          val scalePoly = Polynomial.apply((x_deg - y_deg, scalar))
+          modulusQuotientHelper(x - scalePoly * y, y, scalePoly + prevScale)
+        }
     }
   }
 
@@ -188,21 +189,6 @@ object Polynomial {
     val result = modulusQuotientHelper(x, y, zero[T])
     (result._1, result._2 + result._3)
   }
-    /*
-    (x.degree, y.degree) match {
-      case (x_deg, y_deg) if x_deg < y_deg => (x, zero[T])
-      case (x_deg, y_deg) if x_deg == y_deg => {
-        val scalar: T = ev.div(x.get(x_deg), y.get(y_deg))
-        (x - scalar * y, scalar)
-      }
-      case (x_deg, y_deg) => {
-        // TODO: Handle divide by zero?
-        val scalar: T = ev.div(x.get(x_deg), y.get(y_deg))
-        val scalePoly = Polynomial.apply((x_deg - y_deg, scalar))
-        val subSolution = modulusQuotient(x - scalePoly * y, y)
-        (subSolution._1, subSolution._2 + scalePoly)
-    } 
-  } */
 
   /**
    * Compute the GCD of polynomials.

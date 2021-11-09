@@ -17,10 +17,16 @@ class PrimeField(val p: Prime) { pf =>
     case class Element private (val value: BigInt) {
 
         def + (that: Element) = apply(this.value + that.value)
+        def unary_+ = this
+
         def - (that: Element) = apply(this.value - that.value)
+        def unary_- = apply(-value)
+
         def * (that: Element): Element = apply(this.value * that.value)
         def / (that: Element): Element = modDiv(this.value, Element.order, that.value).map(apply).get
-
+        
+        def pow(that: Int): Element = elementField.pow(this, that)
+        def reciprocal: Element = one / this
         def toInt = value.toInt
         def toBigInt = value
 
