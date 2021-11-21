@@ -62,6 +62,11 @@ the jupyter server where you want the code to be run:
 ```
 ./mill -i jupyter 3.0.1 <path/to/root/folder>
 ```
+<!-- The actual command I'm running is 
+
+pushd . && source .env/bin/activate && pushd ../almond && ./mill -i jupyter 3.0.1 ../euclid-scala || popd 
+
+-->
 
 
 ## License
